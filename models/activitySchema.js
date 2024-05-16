@@ -14,11 +14,11 @@ const activitySchema = new mongoose.Schema({
         required: true
     },
     participants: {
-        type: String,
+        type: Number,
         required: true
     },
-    price: {
-        type: Number,
+    cost: {
+        type: String,
         required: true
     },
     link: {

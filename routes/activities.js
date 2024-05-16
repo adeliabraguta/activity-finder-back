@@ -85,8 +85,11 @@
 
 /**
  * @swagger
+ * tags:
+ *   name: Activities
  * /activities:
  *   get:
+ *     tags: [Activities]
  *     security:
  *       - Authorization: []
  *     summary: Get activities
@@ -135,8 +138,9 @@
 
 /**
  * @swagger
- * /login:
+ * /token-admin:
  *   post:
+ *     tags: [Login]
  *     summary: Login with role
  *     requestBody:
  *       required: true
@@ -162,8 +166,31 @@
 
 /**
  * @swagger
+ * /token-visitor:
+ *   get:
+ *     tags: [Login]
+ *     summary: Login with role
+ *     responses:
+ *       200:
+ *         description: Token created.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Login'
+ *       401:
+ *         description: Authentication error, token is expired or invalid.
+ *       403:
+ *         description: Authentication error, token is valid but the user does not have the required role.
+ *       500:
+ *         description: Server Error
+ *
+ */
+
+/**
+ * @swagger
  * /post-activity:
  *   post:
+ *     tags: [Activities]
  *     security:
  *       - Authorization: []
  *     summary: Post activity
@@ -195,6 +222,7 @@
  * @swagger
  * /delete-activity/:id:
  *   delete:
+ *     tags: [Activities]
  *     security:
  *       - Authorization: []
  *     summary: Delete activity
@@ -214,6 +242,7 @@
  * @swagger
  * /update-activity/:id:
  *   put:
+ *     tags: [Activities]
  *     security:
  *       - Authorization: []
  *     summary: Update activity

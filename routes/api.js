@@ -8,20 +8,47 @@ const roleUser = 'visitor'
 const roleAdmin = 'admin'
 
 router.get('/activities', authToken, async (req, res) => {
-    const page = parseInt(req.query.page) || 1
-    const limit = parseInt(req.query.limit) || 5
+    const {participants, type, page = 1, limit = 5} = req.query;
     const startIndex = (page - 1) * limit
 
     try {
-        const activities = await Activity.find().skip(startIndex).limit(limit)
-        const count = await Activity.countDocuments();
+        const query = {};
+        if (participants) query.participants = participants;
+        if (type) query.type = type;
+
+        const [countActivities, activities] = await Promise.all([
+            Activity.countDocuments(query),
+            Activity.find(query).skip(startIndex).limit(limit)
+        ]);
+
         res.json({
-            totalItems: count,
+            totalItems: countActivities,
             totalItemsPerPage: activities.length,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page,
+            totalPages: Math.ceil(countActivities / limit),
+            currentPage: parseInt(page),
             data: activities
         })
+    } catch (error) {
+        res.status(500).json({message: error.message})
+    }
+})
+
+router.get('/activity', authToken, async (req, res) => {
+    const {participants, type} = req.query;
+    try {
+        const query = {};
+        if (participants) query.participants = participants;
+        if (type) query.type = type;
+
+        const activities = await Activity.find(query)
+        if (activities.length === 0) {
+            res.status(400).json({message: "No activity found for the specified parameters"})
+        }
+        const randomActivity = activities[Math.floor(Math.random() * activities.length)]
+
+        res.json(
+            randomActivity
+        )
     } catch (error) {
         res.status(500).json({message: error.message})
     }
@@ -38,43 +65,61 @@ router.get('/types', authToken, async (req, res) => {
     }
 })
 
-router.post('/login', async (req, res) => {
+router.post('/token-admin', async (req, res) => {
     try {
         const user = await User.find({username: req.body.username})
-        if (!user) {
+        if (user.length === 0) {
             return res.status(403).json({message: 'Wrong credentials'})
         }
         if (user[0].password !== req.body.password) {
             return res.status(403).json({message: 'Wrong credentials'})
         }
         const userRole = {userRole: roleAdmin}
-        const accessToken = jwt.sign(userRole, process.env.ACCESS_TOKEN_SECRET)
+        const accessToken = jwt.sign(userRole, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'})
         res.json({accessToken: accessToken})
     } catch (err) {
         res.status(500).json({message: 'Failed to log into account'})
     }
 })
 
+router.get('/token-visitor', async (req, res) => {
+    try {
+        const userRole = {userRole: roleUser}
+        const accessToken = jwt.sign(userRole, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'})
+        res.json({accessToken: accessToken})
+    } catch (err) {
+        res.status(500).json({message: 'Failed to get accessToken'})
+    }
+})
+
 router.post('/post-activity', adminMiddleware, async (req, res) => {
-    let accessibility
-    if (!req.body.activity || req.body.price === null || req.body.accessibility === null || !req.body.type || !req.body.participants || !req.body.link) {
+    let accessibility, participants
+    if (!req.body.activity || req.body.cost === null || req.body.accessibility === null || !req.body.type || !req.body.participants || !req.body.link) {
         return res.status(400).json({message: 'Missing required fields'})
     }
 
-    if(req.body.accessibility < 1){
+    if (req.body.accessibility < 1) {
         accessibility = 1
-    } else if(req.body.accessibility > 10){
+    } else if (req.body.accessibility > 10) {
         accessibility = 10
     } else {
         accessibility = req.body.accessibility
+    }
+
+    if (req.body.participants < 1) {
+        participants = 1
+    } else if (req.body.participants > 4) {
+        participants = 4
+    } else {
+        participants = req.body.participants
     }
 
     const activity = new Activity({
         activity: req.body.activity,
         accessibility: accessibility,
         type: req.body.type,
-        participants: req.body.participants,
-        price: req.body.price,
+        participants: participants,
+        cost: req.body.cost,
         link: req.body.link,
     })
     try {
@@ -103,7 +148,7 @@ router.delete("/delete-activity/:id", adminMiddleware, async (req, res) => {
 })
 
 router.put("/update-activity/:id", adminMiddleware, async (req, res) => {
-    if (!req.body.activity || req.body.price === null || req.body.accessibility === null || !req.body.type || !req.body.participants || !req.body.link) {
+    if (!req.body.activity || req.body.cost === null || req.body.accessibility === null || !req.body.type || !req.body.participants || !req.body.link) {
         return res.status(400).json({message: 'Missing required fields'})
     }
     try {
@@ -112,7 +157,7 @@ router.put("/update-activity/:id", adminMiddleware, async (req, res) => {
             accessibility: req.body.accessibility,
             type: req.body.type,
             participants: req.body.participants,
-            price: req.body.price,
+            cost: req.body.cost,
             link: req.body.link,
         });
         res.status(201).json({message: 'Activity updated successfully'})
