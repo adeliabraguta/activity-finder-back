@@ -138,7 +138,7 @@
 
 /**
  * @swagger
- * /token-admin:
+ * /token/admin:
  *   post:
  *     tags: [Login]
  *     summary: Login with role
@@ -166,7 +166,7 @@
 
 /**
  * @swagger
- * /token-visitor:
+ * /token/visitor:
  *   get:
  *     tags: [Login]
  *     summary: Login with role
@@ -188,7 +188,7 @@
 
 /**
  * @swagger
- * /post-activity:
+ * /activities:
  *   post:
  *     tags: [Activities]
  *     security:
@@ -220,7 +220,7 @@
 
 /**
  * @swagger
- * /delete-activity/:id:
+ * /activities/:id:
  *   delete:
  *     tags: [Activities]
  *     security:
@@ -240,7 +240,7 @@
 
 /**
  * @swagger
- * /update-activity/:id:
+ * /activities/:id:
  *   put:
  *     tags: [Activities]
  *     security:

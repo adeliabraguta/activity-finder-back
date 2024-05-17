@@ -1,6 +1,7 @@
 import {config} from "dotenv";
 import express from 'express'
 import methods from "./routes/api.js";
+import token from "./routes/token.js"
 import mongoose from "mongoose";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -44,7 +45,8 @@ app.use("/api-docs",
     swaggerUi.serve,
     swaggerUi.setup(swaggerJsdoc(options)))
 app.use(express.json());
-app.use(methods)
+app.use("/activities",methods)
+app.use("/token", token)
 
 app.listen(3000)
 

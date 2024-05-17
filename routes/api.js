@@ -1,13 +1,12 @@
 import jwt from "jsonwebtoken";
 import express from "express";
 import Activity from "../models/activitySchema.js";
-import User from "../models/userSchema.js"
 
 const router = express.Router()
 const roleUser = 'visitor'
 const roleAdmin = 'admin'
 
-router.get('/activities', authToken, async (req, res) => {
+router.get('', authToken, async (req, res) => {
     const {participants, type, page = 1, limit = 5} = req.query;
     const startIndex = (page - 1) * limit
 
@@ -33,7 +32,7 @@ router.get('/activities', authToken, async (req, res) => {
     }
 })
 
-router.get('/activity', authToken, async (req, res) => {
+router.get('/random', authToken, async (req, res) => {
     const {participants, type} = req.query;
     try {
         const query = {};
@@ -58,41 +57,13 @@ router.get('/types', authToken, async (req, res) => {
     try {
         const activities = await Activity.find()
         const types = activities.find(type => type.type)
-        console.log(types)
         res.json({types: types})
     } catch (error) {
         res.status(500).json({message: error.message})
     }
 })
 
-router.post('/token-admin', async (req, res) => {
-    try {
-        const user = await User.find({username: req.body.username})
-        if (user.length === 0) {
-            return res.status(403).json({message: 'Wrong credentials'})
-        }
-        if (user[0].password !== req.body.password) {
-            return res.status(403).json({message: 'Wrong credentials'})
-        }
-        const userRole = {userRole: roleAdmin}
-        const accessToken = jwt.sign(userRole, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'})
-        res.json({accessToken: accessToken})
-    } catch (err) {
-        res.status(500).json({message: 'Failed to log into account'})
-    }
-})
-
-router.get('/token-visitor', async (req, res) => {
-    try {
-        const userRole = {userRole: roleUser}
-        const accessToken = jwt.sign(userRole, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1m'})
-        res.json({accessToken: accessToken})
-    } catch (err) {
-        res.status(500).json({message: 'Failed to get accessToken'})
-    }
-})
-
-router.post('/post-activity', adminMiddleware, async (req, res) => {
+router.post('', adminMiddleware, async (req, res) => {
     let accessibility, participants
     if (!req.body.activity || req.body.cost === null || req.body.accessibility === null || !req.body.type || !req.body.participants || !req.body.link) {
         return res.status(400).json({message: 'Missing required fields'})
@@ -134,7 +105,7 @@ router.post('/post-activity', adminMiddleware, async (req, res) => {
     }
 })
 
-router.delete("/delete-activity/:id", adminMiddleware, async (req, res) => {
+router.delete(":id", adminMiddleware, async (req, res) => {
     const {id} = req.params;
     try {
         const activity = await Activity.deleteOne({_id: id})
@@ -147,7 +118,7 @@ router.delete("/delete-activity/:id", adminMiddleware, async (req, res) => {
     }
 })
 
-router.put("/update-activity/:id", adminMiddleware, async (req, res) => {
+router.put(":id", adminMiddleware, async (req, res) => {
     if (!req.body.activity || req.body.cost === null || req.body.accessibility === null || !req.body.type || !req.body.participants || !req.body.link) {
         return res.status(400).json({message: 'Missing required fields'})
     }
